@@ -1,2 +1,6 @@
 # JTLComponentChecker
-Utility program that grades JTL component loot.
+
+Little SWG JTL utility made to grade your space components.
+
+Relies on https://github.com/tesseract-ocr/tesseract for OCR.
+
