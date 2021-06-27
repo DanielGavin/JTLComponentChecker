@@ -1,6 +1,6 @@
 #include "parse.h"
 
-float scanReal(const std::string &text, int &index)
+double scanReal(const std::string &text, int &index)
 {
 	unsigned char current = text[index];
 
@@ -12,7 +12,7 @@ float scanReal(const std::string &text, int &index)
 	if (isdigit(current))
 	{
 		char *end;
-		float v = strtof(&text[index], &end);
+		double v = strtod(&text[index], &end);
 		uintptr_t diff = (uintptr_t)end - (uintptr_t)&text[index];
 		index += diff;
 		return v;
@@ -23,7 +23,7 @@ float scanReal(const std::string &text, int &index)
 	}
 }
 
-float scanRealDivisor(const std::string &text, int &index)
+double scanRealDivisor(const std::string &text, int &index)
 {
 	scanReal(text, index);
 
@@ -43,7 +43,7 @@ float scanRealDivisor(const std::string &text, int &index)
 	return 0;
 }
 
-void scanRealMinMax(const std::string &text, int &index, float &min, float &max)
+void scanRealMinMax(const std::string &text, int &index, double &min, double &max)
 {
 	min = scanReal(text, index);
 
@@ -61,37 +61,39 @@ void scanRealMinMax(const std::string &text, int &index, float &min, float &max)
 	}
 }
 
-void inferComponentType(Component& component)
+void ValidateComponent(Component& component)
 {
-	if (component.reactorGeneration)
+	//TODO(add range checks to see that all the input actually makes sense in relation to caps)
+
+	if (component.values.count("Reactor Generation"))
 	{
 		component.type = ComponentType::Reactor;
 	}
-	else if (component.engineTopSpeed)
+	else if (component.values.count("EngineTopSpeed"))
 	{
 		component.type = ComponentType::Engine;
 	}
-	else if (component.backShieldHp)
+	else if (component.values.count("BackShieldHp"))
 	{
 		component.type = ComponentType::Shield;
 	}
-	else if (component.armor)
+	else if (component.values.count("Armor"))
 	{
 		component.type = ComponentType::Armor;
 	}
-	else if (component.capacitorEnergy)
+	else if (component.values.count("CapacitorEnergy"))
 	{
 		component.type = ComponentType::Capacitor;
 	}
-	else if (component.boosterRecharge)
+	else if (component.values.count("BoosterSpeed"))
 	{
 		component.type = ComponentType::Booster;
 	}
-	else if (component.energyPerShot)
+	else if (component.values.count("FiringRate"))
 	{
 		component.type = ComponentType::Weapon;
 	}
-	else if (component.droidSpeed)
+	else if (component.values.count("DroidSpeed"))
 	{
 		component.type = ComponentType::Droid;
 	}
@@ -190,7 +192,7 @@ Component parseComponent(const std::string &imageText)
 						if (thirdBack == "Ship")
 						{
 							std::string fourthBack = popWordStack(wordStack);
-							component.level = std::stof(fourthBack);
+							component.values["ShipLevel"] = std::stof(fourthBack);
 						}
 					}
 
@@ -198,15 +200,15 @@ Component parseComponent(const std::string &imageText)
 
 				else if (back == "Pitch")
 				{
-					component.pitch = scanReal(imageText, index);
+					component.values["Pitch"] = scanReal(imageText, index);
 				}
 				else if (back == "Yaw")
 				{
-					component.yaw = scanReal(imageText, index);
+					component.values["Yaw"] = scanReal(imageText, index);
 				}
 				else if (back == "Roll")
 				{
-					component.roll = scanReal(imageText, index);
+					component.values["Roll"] = scanReal(imageText, index);
 				}
 				else if (back == "Speed")
 				{
@@ -214,11 +216,15 @@ Component parseComponent(const std::string &imageText)
 
 					if (secondBack == "Top")
 					{
-						component.engineTopSpeed = scanReal(imageText, index);
+						component.values["EngineTopSpeed"] = scanReal(imageText, index);
 					}
 					else if (secondBack == "Booster")
 					{
-						component.boosterSpeed = scanReal(imageText, index);
+						component.values["BoosterSpeed"] = scanReal(imageText, index);
+					}
+					else if (secondBack == "Command")
+					{
+						component.values["DroidSpeed"] = scanReal(imageText, index);
 					}
 				}
 				else if (back == "Energy")
@@ -227,16 +233,16 @@ Component parseComponent(const std::string &imageText)
 
 					if (secondBack == "Booster")
 					{
-						component.boosterEnergy = scanReal(imageText, index);
+						component.values["BoosterEnergy"] = scanReal(imageText, index);
 					}
 					else if (secondBack == "Capacitor")
 					{
-						component.capacitorEnergy = scanReal(imageText, index);
+						component.values["CapacitorEnergy"] = scanReal(imageText, index);
 					}
 				}
 				else if (back == "Armor")
 				{
-					component.armor = scanRealDivisor(imageText, index);
+					component.values["Armor"] = scanRealDivisor(imageText, index);
 				}
 				else if (back == "Hitpoints")
 				{
@@ -248,53 +254,56 @@ Component parseComponent(const std::string &imageText)
 
 						if (thirdBack == "Front")
 						{
-							component.frontShieldHp = scanRealDivisor(imageText, index);
+							component.values["FrontShieldHp"] = scanRealDivisor(imageText, index);
 						}
 						else if (thirdBack == "Back")
 						{
-							component.backShieldHp = scanRealDivisor(imageText, index);
+							component.values["BackShieldHp"] = scanRealDivisor(imageText, index);
 						}
 					}
 					else {
-						component.hp = scanReal(imageText, index);
+						component.values["Hp"] = scanReal(imageText, index);
 					}
 				}
 				else if (back == "Mass")
 				{
-					component.mass = scanReal(imageText, index);
+					component.values["Mass"] = scanReal(imageText, index);
 				}
 				else if (back == "Rate")
 				{
 					std::string secondBack = popWordStack(wordStack);
 					if (secondBack == "Refire")
 					{
-						component.refireRate = scanReal(imageText, index);
+						component.values["RefireRate"] = scanReal(imageText, index);
 					}
 					else if (secondBack == "Recharge")
 					{
-						std::string thirdBack = popWordStack(wordStack);
-						component.rechargeRate = scanReal(imageText, index);
+						component.values["RechargeRate"] = scanReal(imageText, index);
 					}
 					else if (secondBack == "Firing")
 					{
-						component.firingRate = scanReal(imageText, index);
+						component.values["FiringRate"] = scanReal(imageText, index);
 					}
 					else if (secondBack == "Generation")
 					{
-						component.reactorGeneration = scanReal(imageText, index);
+						component.values["ReactorGeneration"] = scanReal(imageText, index);
 					}
 				}
 				else if (back == "Speed")
 				{
-					component.speed = scanReal(imageText, index);
+					component.values["Speed"] = scanReal(imageText, index);
 				}
 				else if (back == "Acceleration")
 				{
-					component.acceleration = scanReal(imageText, index);
+					component.values["Acceleration"] = scanReal(imageText, index);
 				}
 				else if (back == "Damage")
 				{
-					scanRealMinMax(imageText, index, component.damageMin, component.damageMax);
+					double minDmg, maxDmg;
+					scanRealMinMax(imageText, index, minDmg, maxDmg);
+
+					component.values["MinDamage"] = minDmg;
+					component.values["MaxDamage"] = maxDmg;
 				}
 				else if (back == "Level")
 				{
@@ -302,12 +311,12 @@ Component parseComponent(const std::string &imageText)
 
 					if (secondBack == "Engineering")
 					{
-						component.reverseLevel = scanReal(imageText, index);
+						component.values["ReverseLevel"] = scanReal(imageText, index);
 					}
 				}
 				else if (back == "Drain")
 				{
-					component.reactorDrain = scanReal(imageText, index);
+					component.values["ReactorDrain"] = scanReal(imageText, index);
 				}
 
 				wordStack.clear();
@@ -319,7 +328,7 @@ Component parseComponent(const std::string &imageText)
 		current = imageText[++index];
 	}
 
-	inferComponentType(component);
+	ValidateComponent(component);
 
 	return component;
 }

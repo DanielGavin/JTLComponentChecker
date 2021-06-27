@@ -122,7 +122,7 @@ Box findComponentBox(Pix *image, bool& ok)
 		}
 	}
 
-	if (lengths.size() < 2 || lengths.size() == 0)
+	if (lengths.size() > 2 || lengths.size() == 0)
 	{
 		ok = false;
 		return {0};
@@ -174,7 +174,7 @@ char* readImage(Pix *input)
 
 	Pix *deskew = deskewImage(blur);
 
-	Pix *scaled = pixScaleToSize(deskew, deskew->w * 2, deskew->h * 2);
+	Pix *scaled = pixScaleToSize(deskew, deskew->w * 4, deskew->h * 4);
 
 	Pix *finalImage = scaled;
 

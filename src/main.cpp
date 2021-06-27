@@ -20,6 +20,8 @@ static D3DPRESENT_PARAMETERS g_d3dpp = {};
 
 static UINT testKey = 0;
 
+static Component component;
+
 // Forward declarations of helper functions
 bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
@@ -27,17 +29,6 @@ void ResetDevice();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 
-void componentWidget()
-{
-    static bool opened;
-
-    ImGui::Begin("Capture", &opened);
-
-    ImGui::LabelText("test", "%u", testKey);
-
-    ImGui::End();
-
-}
 
 void dockSpace()
 {
@@ -108,7 +99,7 @@ void dockSpace()
 void mainWindow()
 {
     dockSpace();
-    componentWidget();
+    componentWidget(component);
 }
 
 // Main code
@@ -123,13 +114,13 @@ int main(int, char **)
 
     str.push_back('\0');
 
-    auto component = parseComponent(str);
+    component = parseComponent(str);
 
     std::cout << str;
 
 
     if(true) {
-        return 0;
+        //return 0;
     }
 
     // Create application window
