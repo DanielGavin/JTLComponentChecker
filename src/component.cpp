@@ -1,11 +1,6 @@
 #include "component.h"
 #include <imgui/imgui.h>
 
-
-
-
-
-
 void componentWidget(const Component& component)
 {
     static bool opened;

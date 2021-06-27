@@ -7,6 +7,7 @@
 
 #include "read.h"
 #include "parse.h"
+#include "capture.h"
 
 #include <d3d9.h>
 #include <tchar.h>
@@ -21,6 +22,7 @@ static D3DPRESENT_PARAMETERS g_d3dpp = {};
 static UINT testKey = 0;
 
 static Component component;
+static bool capturePressed = false;
 
 // Forward declarations of helper functions
 bool CreateDeviceD3D(HWND hWnd);
@@ -28,16 +30,14 @@ void CleanupDeviceD3D();
 void ResetDevice();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-
-
 void dockSpace()
 {
     static bool opt_padding = false;
     static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
 
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
- 
-    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
     ImGui::SetNextWindowViewport(viewport->ID);
@@ -46,10 +46,9 @@ void dockSpace()
     window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
     window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
-
     // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
     // and handle the pass-thru hole, so we ask Begin() to not render a background.
-    if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode) 
+    if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
     {
         window_flags |= ImGuiWindowFlags_NoBackground;
     }
@@ -58,13 +57,12 @@ void dockSpace()
 
     ImGui::Begin("DockSpace", nullptr, window_flags);
 
-
     ImGui::PopStyleVar();
 
     ImGui::PopStyleVar(2);
 
     // Submit the DockSpace
-    ImGuiIO& io = ImGui::GetIO();
+    ImGuiIO &io = ImGui::GetIO();
 
     if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
     {
@@ -86,7 +84,6 @@ void dockSpace()
             */
             ImGui::Separator();
 
-
             ImGui::EndMenu();
         }
 
@@ -105,24 +102,6 @@ void mainWindow()
 // Main code
 int main(int, char **)
 {
-
-    Pix* image = pixRead("test/test.jpg");
-
-    auto c_str = readImage(image);
-    
-    std::string str = std::string(std::move(c_str));
-
-    str.push_back('\0');
-
-    component = parseComponent(str);
-
-    std::cout << str;
-
-
-    if(true) {
-        //return 0;
-    }
-
     // Create application window
     //ImGui_ImplWin32_EnableDpiAwareness();
     WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, _T("JTL Checker"), NULL};
@@ -145,7 +124,7 @@ int main(int, char **)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
-    
+
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     ImGui::StyleColorsDark();
@@ -163,11 +142,7 @@ int main(int, char **)
     bool done = false;
     while (!done)
     {
-        // Poll and handle messages (inputs, window resize, etc.)
-        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
-        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
-        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
+
         MSG msg;
         while (::PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE))
         {
@@ -179,13 +154,30 @@ int main(int, char **)
         if (done)
             break;
 
+        if (capturePressed)
+        {
+            Pix *pix = captureScreen("");
+            if (pix != nullptr)
+            {
+                auto c_str = readImage(pix);
+
+                std::string str = std::string(std::move(c_str));
+
+                str.push_back('\0');
+
+                component = parseComponent(str);
+
+                pixDestroy(&pix);
+            }
+            capturePressed = false;
+        }
+
         // Start the Dear ImGui frame
         ImGui_ImplDX9_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
         bool is_Docked = ImGui::IsWindowDocked();
-
 
         mainWindow();
 
@@ -272,10 +264,57 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+    {
         return true;
+    }
 
     switch (msg)
     {
+    case WM_INPUT:
+    {
+        UINT size = 0;
+
+        if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &size, sizeof(RAWINPUTHEADER)) == -1)
+        {
+            break;
+        }
+
+        LPBYTE lpb = new BYTE[size];
+
+        if (lpb == NULL)
+        {
+            break;
+        }
+
+        if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, lpb, &size, sizeof(RAWINPUTHEADER)) != size)
+        {
+            delete[] lpb;
+            break;
+        }
+
+        PRAWINPUT raw = (PRAWINPUT)lpb;
+        UINT event;
+        UINT keyChar;
+
+        event = raw->data.keyboard.Message;
+        keyChar = MapVirtualKey(raw->data.keyboard.VKey, MAPVK_VK_TO_CHAR);
+
+        if (event == WM_KEYDOWN && keyChar == '.')
+        {
+            capturePressed = true;
+        }
+
+        delete[] lpb;
+        break;
+    }
+    case WM_CREATE:
+        RAWINPUTDEVICE rid;
+        rid.dwFlags = RIDEV_NOLEGACY | RIDEV_INPUTSINK;
+        rid.usUsagePage = 1;
+        rid.usUsage = 6;
+        rid.hwndTarget = hWnd;
+        RegisterRawInputDevices(&rid, 1, sizeof(rid));
+        break;
     case WM_SIZE:
         if (g_pd3dDevice != NULL && wParam != SIZE_MINIMIZED)
         {

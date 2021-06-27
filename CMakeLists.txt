@@ -15,6 +15,7 @@ add_executable(JTLComponentChecker src/main.cpp
  src/read.cpp 
  src/parse.cpp
  src/component.cpp
+ src/capture.cpp
  src/imgui/imgui.cpp
  src/imgui/imgui_draw.cpp 
  src/imgui/imgui_impl_win32.cpp 
