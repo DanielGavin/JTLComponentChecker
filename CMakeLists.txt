@@ -13,6 +13,7 @@ find_package(Tesseract CONFIG REQUIRED)
 # add the executable
 add_executable(JTLComponentChecker src/main.cpp 
  src/read.cpp 
+ src/parse.cpp
  src/imgui/imgui.cpp
  src/imgui/imgui_draw.cpp 
  src/imgui/imgui_impl_win32.cpp 
@@ -25,3 +26,4 @@ target_link_libraries(JTLComponentChecker PRIVATE libtesseract)
 target_link_libraries(JTLComponentChecker PRIVATE d3d9.lib)
 
 target_include_directories(JTLComponentChecker PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_compile_features(JTLComponentChecker PRIVATE cxx_std_17)

@@ -4,4 +4,4 @@
 
 struct Pix;
 
-std::string readImage(Pix* image);
+char* readImage(Pix* image);

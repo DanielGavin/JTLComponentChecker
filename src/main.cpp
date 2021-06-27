@@ -6,6 +6,7 @@
 #include <imgui/imgui_impl_dx9.h>
 
 #include "read.h"
+#include "parse.h"
 
 #include <d3d9.h>
 #include <tchar.h>
@@ -27,11 +28,6 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 
 void componentWidget()
-{
-
-}
-
-void captureWidget()
 {
     static bool opened;
 
@@ -112,7 +108,7 @@ void dockSpace()
 void mainWindow()
 {
     dockSpace();
-    captureWidget();
+    componentWidget();
 }
 
 // Main code
@@ -121,7 +117,13 @@ int main(int, char **)
 
     Pix* image = pixRead("test/test.jpg");
 
-    auto str = readImage(image);
+    auto c_str = readImage(image);
+    
+    std::string str = std::string(std::move(c_str));
+
+    str.push_back('\0');
+
+    auto component = parseComponent(str);
 
     std::cout << str;
 
