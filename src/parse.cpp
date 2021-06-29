@@ -258,6 +258,9 @@ Component parseComponent(const std::string &imageText)
 					{
 						component.values["VsArmor"] = scanReal(imageText, index);
 					}
+					else {
+						component.values["Armor"] = scanRealDivisor(imageText, index);
+					}
 				}
 				else if (back == "Shields")
 				{

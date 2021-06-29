@@ -8,6 +8,7 @@
 #include "parse.h"
 #include "capture.h"
 #include "keyboard.h"
+#include "options.h"
 
 #include <d3d9.h>
 #include <tchar.h>
@@ -98,7 +99,8 @@ void dockSpace()
 void mainWindow()
 {
     dockSpace();
-    componentWidget(component);
+    drawComponentWidget(component);
+    drawOptionsWidget();
 }
 
 // Main code
@@ -151,22 +153,6 @@ int main(int, char **)
 		exit(1);
 	}
 
-    /*
-    if(true)
-    {
-        Pix *pix = pixRead("test/test.bmp");
-        Box *box = boxCreate(recordPoints[0].x, recordPoints[0].y, recordPoints[1].x - recordPoints[0].x, recordPoints[1].y - recordPoints[0].y);
-        auto c_str = readImage(api, pix, box);
-
-        std::string str = std::string(std::move(c_str));
-        str.push_back('\0');
-        component = parseComponent(str);
-
-        printf("%s", c_str);
-        //return 0;
-    }
-    */
-
     // Main loop
     bool done = false;
     while (!done)
@@ -208,7 +194,7 @@ int main(int, char **)
             {
                 Box *box = boxCreate(recordPoints[0].x, recordPoints[0].y, recordPoints[1].x - recordPoints[0].x, recordPoints[1].y - recordPoints[0].y);
                 auto c_str = readImage(api, pix, box);
-
+                printf("%s", c_str);
                 std::string str = std::string(std::move(c_str));
 
                 str.push_back('\0');

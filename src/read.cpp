@@ -24,14 +24,6 @@ Pix *blurImage(Pix *image)
 	return pixAddGaussianNoise(pixG, 1);
 }
 
-struct VerticalLine
-{
-	l_int32 w;
-	l_int32 start;
-	l_int32 length;
-	l_int32 thickness;
-};
-
 char* readImage(tesseract::TessBaseAPI* api, Pix *input, Box* box)
 {
 	char* outText;

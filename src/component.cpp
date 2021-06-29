@@ -1,30 +1,31 @@
 #include "component.h"
 #include <imgui/imgui.h>
 
-double divCap(const double& val, const double& table)
+double divCap(const double &val, const double &table)
 {
 	if (table > val)
 	{
 		return val / table * 100;
 	}
-	else {
+	else
+	{
 		return table / val * 100;
 	}
 }
 
-void componentWidget(Component& component)
+void drawComponentWidget(Component &component)
 {
-    static bool opened;
+	static bool opened;
 
-    ImGui::Begin("Component Info", &opened);
+	ImGui::Begin("Component Info", &opened);
 
 	for (auto const &[key, val] : component.values)
 	{
-		ImGui::Text("%s:", key.c_str()); 
-		ImGui::SameLine(); 
+		ImGui::Text("%s:", key.c_str());
+		ImGui::SameLine();
 		ImGui::Text("%f", val);
-	
-		if(key == "ShipLevel" || key == "ReverseLevel")
+
+		if (key == "ShipLevel" || key == "ReverseLevel")
 		{
 			continue;
 		}
@@ -35,13 +36,10 @@ void componentWidget(Component& component)
 			ImGui::SameLine();
 			ImGui::Text("Percentage:");
 			ImGui::SameLine();
-			ImGui::TextColored(ImVec4(0, 1, 0, 1), "%f%s", divCap(val, armorTable[key][component.values["ShipLevel"]]));
+			ImGui::TextColored(ImVec4(0, 1, 0, 1), "%f", divCap(val, armorTable[key][component.values["ShipLevel"]]));
 			break;
 		}
-
-		
-		
 	}
 
-    ImGui::End();
+	ImGui::End();
 }
