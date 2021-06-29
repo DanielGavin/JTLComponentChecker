@@ -192,7 +192,10 @@ Component parseComponent(const std::string &imageText)
 						if (thirdBack == "Ship")
 						{
 							std::string fourthBack = popWordStack(wordStack);
-							component.values["ShipLevel"] = std::stof(fourthBack);
+							if (fourthBack != "")
+							{
+								component.values["ShipLevel"] = std::stof(fourthBack);
+							}
 						}
 					}
 

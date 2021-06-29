@@ -1,12 +1,11 @@
-#include <tesseract/baseapi.h>
-#include <leptonica/allheaders.h>
 #include <iostream>
 #include <map>
+#include "read.h"
 
-Pix *normalizationAndThreshold(Pix *image)
+Pix *normalizationAndThreshold(Pix *image, int threshold)
 {
 	Pix *pixG = pixConvertTo8(image, 0);
-	Pix *pix1 = pixBackgroundNorm(pixG, NULL, NULL, 10, 15, 230, 50, 255, 2, 2);
+	Pix *pix1 = pixBackgroundNorm(pixG, NULL, NULL, 10, 15, threshold, 50, 255, 2, 2);
 	Pix *pix2 = pixThresholdToBinary(pix1, 100);
 	return pix2;
 }
@@ -23,11 +22,6 @@ Pix *blurImage(Pix *image)
 {
 	Pix *pixG = pixConvertTo8(image, 0);
 	return pixAddGaussianNoise(pixG, 1);
-}
-
-Pix *deskewImage(Pix *image)
-{
-	return pixUnsharpMasking(image, 1, 0.3f);
 }
 
 struct VerticalLine
@@ -84,7 +78,7 @@ void findMaxVerticalLines(Pix *image, std::vector<VerticalLine> &lines)
 	Uses vertical lines to segment out all the components and picks the one that seems most likely to fit.
 	This is one method of finding it automatically, but there should be a manual version where the user can choose two points.
 */
-Box findComponentBox(Pix *image, bool& ok)
+Box* findComponentBox(Pix *image, bool& ok)
 {
 	Pix *pix = pixConvertTo1(image, 100);
 
@@ -142,65 +136,52 @@ Box findComponentBox(Pix *image, bool& ok)
 		}
 	}
 
-	Box box;
-	box.x = lengths[index][0].w;
-	box.w = lengths[index][1].w - lengths[index][0].w;
-	box.y = lengths[index][0].start;
-	box.h = lengths[index][1].length;
+	Box* box = boxCreate(lengths[index][0].w, lengths[index][0].start, lengths[index][1].w - lengths[index][0].w, lengths[index][1].length);
 
 	ok = true;
 
 	return box;
 }
 
-char* readImage(Pix *input)
+char* readImage(tesseract::TessBaseAPI* api, Pix *input)
 {
 	char* outText;
-	tesseract::TessBaseAPI *api = new tesseract::TessBaseAPI();
 
-	char *configs[] = {"data/config/bazaar"};
-
-	if (api->Init("data", "eng", tesseract::OcrEngineMode::OEM_DEFAULT, configs, 1, nullptr, nullptr, false))
-	{
-		fprintf(stderr, "Could not initialize tesseract.\n");
-		exit(1);
-	}
-
-	Pix *normalized = normalizationAndThreshold(input);
+	Pix *normalized = normalizationAndThreshold(input, 230);
 
 	Pix *invert = invertImage(normalized);
 
-    Pix *blur = blurImage(invert);
-
-	Pix *deskew = deskewImage(blur);
-
-	Pix *scaled = pixScaleToSize(deskew, deskew->w * 4, deskew->h * 4);
-
-	Pix *finalImage = scaled;
-
 	bool foundComponent = false;
 
-	Box box = findComponentBox(finalImage, foundComponent);
+	Box* box = findComponentBox(invert, foundComponent);
 
 	if (!foundComponent)
 	{
 		return "";
 	}
 
-	api->SetImage(scaled);
-	api->SetRectangle(box.x, box.y, box.w, box.h);
+	Pix* crop = pixClipRectangle(input, box, nullptr);
 
+	Pix *cropNormalized = normalizationAndThreshold(crop, 150);
+
+	Pix *cropInvert = invertImage(cropNormalized);
+
+    Pix *blur = blurImage(cropInvert);
+	Pix *scaled = pixScaleToSize(blur, blur->w * 4, blur->h * 4);
+	Pix *dilate = pixDilateGray(scaled, 3, 3);
+	Pix *finalImage = dilate;
+
+	pixWrite("crop.png", finalImage, IFF_PNG);
+
+	api->SetImage(finalImage);
 	api->SetSourceResolution(100);
 
 	outText = api->GetUTF8Text();
 
-	api->End();
-	delete api;
-
 	pixDestroy(&normalized);
 	pixDestroy(&invert);
 	pixDestroy(&blur);
-	pixDestroy(&deskew);
+	pixDestroy(&finalImage);
 	pixDestroy(&scaled);
 	pixDestroy(&input);
 

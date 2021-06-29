@@ -1,7 +1,8 @@
 #pragma once
 
 #include <string>
+#include <tesseract/baseapi.h>
+#include <leptonica/allheaders.h>
 
-struct Pix;
 
-char* readImage(Pix* image);
+char* readImage(tesseract::TessBaseAPI* api, Pix* image);

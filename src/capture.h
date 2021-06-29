@@ -4,4 +4,4 @@
 
 struct Pix;
 
-Pix* captureScreen(std::string screenName);
+void captureScreen(std::string screenName);

@@ -1,4 +1,3 @@
-#include <leptonica/allheaders.h>
 #include <assert.h>
 
 #include <imgui/imgui.h>
@@ -8,6 +7,7 @@
 #include "read.h"
 #include "parse.h"
 #include "capture.h"
+#include "keyboard.h"
 
 #include <d3d9.h>
 #include <tchar.h>
@@ -19,10 +19,9 @@ static LPDIRECT3D9 g_pD3D = NULL;
 static LPDIRECT3DDEVICE9 g_pd3dDevice = NULL;
 static D3DPRESENT_PARAMETERS g_d3dpp = {};
 
-static UINT testKey = 0;
-
 static Component component;
-static bool capturePressed = false;
+
+static 	char *configs[] = {"data/config/bazaar"};
 
 // Forward declarations of helper functions
 bool CreateDeviceD3D(HWND hWnd);
@@ -102,23 +101,26 @@ void mainWindow()
 // Main code
 int main(int, char **)
 {
+    
     // Create application window
     //ImGui_ImplWin32_EnableDpiAwareness();
     WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, _T("JTL Checker"), NULL};
-    ::RegisterClassEx(&wc);
-    HWND hwnd = ::CreateWindow(wc.lpszClassName, _T("JTL Checker"), WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, NULL, NULL, wc.hInstance, NULL);
+    
+    RegisterClassEx(&wc);
+
+    HWND hwnd = CreateWindow(wc.lpszClassName, _T("JTL Checker"), WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, NULL, NULL, wc.hInstance, NULL);
 
     // Initialize Direct3D
     if (!CreateDeviceD3D(hwnd))
     {
         CleanupDeviceD3D();
-        ::UnregisterClass(wc.lpszClassName, wc.hInstance);
+        UnregisterClass(wc.lpszClassName, wc.hInstance);
         return 1;
     }
 
     // Show the window
-    ::ShowWindow(hwnd, SW_SHOWDEFAULT);
-    ::UpdateWindow(hwnd);
+    ShowWindow(hwnd, SW_SHOWDEFAULT);
+    UpdateWindow(hwnd);
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -138,38 +140,54 @@ int main(int, char **)
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+    tesseract::TessBaseAPI *api = new tesseract::TessBaseAPI();
+
+	if (api->Init("data", "eng", tesseract::OcrEngineMode::OEM_DEFAULT, nullptr, 0, nullptr, nullptr, false))
+	{
+		fprintf(stderr, "Could not initialize tesseract.\n");
+		exit(1);
+	}
+
+    if(false)
+    {
+        Pix *pix = pixRead("test/test.bmp");
+        auto c_str = readImage(api, pix);
+        printf("%s", c_str);
+        return 0;
+    }
+
     // Main loop
     bool done = false;
     while (!done)
     {
 
         MSG msg;
-        while (::PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE))
+        while (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE))
         {
-            ::TranslateMessage(&msg);
-            ::DispatchMessage(&msg);
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
             if (msg.message == WM_QUIT)
                 done = true;
         }
         if (done)
-            break;
-
-        if (capturePressed)
         {
-            Pix *pix = captureScreen("");
+            break;
+        }
+
+        if (getKeypressAndReset())
+        {
+            captureScreen("");
+            Pix *pix = pixRead("capture.bmp");
             if (pix != nullptr)
             {
-                auto c_str = readImage(pix);
+                auto c_str = readImage(api, pix);
 
                 std::string str = std::string(std::move(c_str));
 
                 str.push_back('\0');
 
                 component = parseComponent(str);
-
-                pixDestroy(&pix);
             }
-            capturePressed = false;
         }
 
         // Start the Dear ImGui frame
@@ -206,8 +224,11 @@ int main(int, char **)
     ImGui::DestroyContext();
 
     CleanupDeviceD3D();
-    ::DestroyWindow(hwnd);
-    ::UnregisterClass(wc.lpszClassName, wc.hInstance);
+    DestroyWindow(hwnd);
+    UnregisterClass(wc.lpszClassName, wc.hInstance);
+
+    api->End();
+	delete api;
 
     return 0;
 }
@@ -270,50 +291,8 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     switch (msg)
     {
-    case WM_INPUT:
-    {
-        UINT size = 0;
-
-        if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &size, sizeof(RAWINPUTHEADER)) == -1)
-        {
-            break;
-        }
-
-        LPBYTE lpb = new BYTE[size];
-
-        if (lpb == NULL)
-        {
-            break;
-        }
-
-        if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, lpb, &size, sizeof(RAWINPUTHEADER)) != size)
-        {
-            delete[] lpb;
-            break;
-        }
-
-        PRAWINPUT raw = (PRAWINPUT)lpb;
-        UINT event;
-        UINT keyChar;
-
-        event = raw->data.keyboard.Message;
-        keyChar = MapVirtualKey(raw->data.keyboard.VKey, MAPVK_VK_TO_CHAR);
-
-        if (event == WM_KEYDOWN && keyChar == '.')
-        {
-            capturePressed = true;
-        }
-
-        delete[] lpb;
-        break;
-    }
     case WM_CREATE:
-        RAWINPUTDEVICE rid;
-        rid.dwFlags = RIDEV_NOLEGACY | RIDEV_INPUTSINK;
-        rid.usUsagePage = 1;
-        rid.usUsage = 6;
-        rid.hwndTarget = hWnd;
-        RegisterRawInputDevices(&rid, 1, sizeof(rid));
+        installKeyboardHook();
         break;
     case WM_SIZE:
         if (g_pd3dDevice != NULL && wParam != SIZE_MINIMIZED)

@@ -3,7 +3,7 @@
 #include <leptonica/allheaders.h>
 #include <Windows.h>
 
-Pix* captureScreen(std::string screenName)
+void captureScreen(std::string screenName)
 {
 	(void)screenName;
 	//Taken from the win32 example
@@ -49,7 +49,7 @@ Pix* captureScreen(std::string screenName)
 
 	if (GetDIBits(hdc, hBitmap, 0, bmpScreen.bmHeight, (LPVOID)data, (BITMAPINFO*)&bi, DIB_RGB_COLORS) == 0)
 	{
-		return nullptr;
+		return;
 	}
 
 	HANDLE hFile = CreateFile("capture.bmp",
@@ -84,6 +84,4 @@ Pix* captureScreen(std::string screenName)
 	DeleteObject(hScreenDC);
     DeleteObject(hMemoryDC);
     ReleaseDC(NULL, hdc);
-
-	return pixRead("capture.bmp");
 }
