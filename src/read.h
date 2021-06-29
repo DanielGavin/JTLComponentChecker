@@ -5,4 +5,4 @@
 #include <leptonica/allheaders.h>
 
 
-char* readImage(tesseract::TessBaseAPI* api, Pix* image);
+char* readImage(tesseract::TessBaseAPI* api, Pix* image, Box* box);

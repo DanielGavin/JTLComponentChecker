@@ -2,7 +2,8 @@
 #include <iostream>
 #include "capture.h"
 
-static bool keyPressed = false;
+static bool capturekeyPressed = false;
+static bool captureCoordinate = false;
 
 static HHOOK hook;
 
@@ -18,7 +19,11 @@ LRESULT CALLBACK keyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 
 			if (key == '.')
 			{
-				keyPressed = true;
+				capturekeyPressed = true;
+			}
+			else if (key == ',')
+			{
+				captureCoordinate = true;
 			}
 		}
 	}
@@ -26,10 +31,17 @@ LRESULT CALLBACK keyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 	return CallNextHookEx(0, nCode, wParam, lParam);
 }
 
-bool getKeypressAndReset()
+bool getScreenCaptureKeypressAndReset()
 {
-	bool tmp = keyPressed;
-	keyPressed = false;
+	bool tmp = capturekeyPressed;
+	capturekeyPressed = false;
+	return tmp;
+}
+
+bool getCoordCaptureKeypressAndReset()
+{
+	bool tmp = captureCoordinate;
+	captureCoordinate = false;
 	return tmp;
 }
 

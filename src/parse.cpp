@@ -34,6 +34,12 @@ double scanRealDivisor(const std::string &text, int &index)
 		current = text[++index];
 	}
 
+	//Sometimes tesseract thinks there are commas with slashes, if this only happens on slahes, then this should fix it, otherwise improve the preprocessing.
+	if (current == ',')
+	{
+		current = text[++index];
+	}
+
 	if (current == '/')
 	{
 		index += 1;
@@ -245,7 +251,27 @@ Component parseComponent(const std::string &imageText)
 				}
 				else if (back == "Armor")
 				{
-					component.values["Armor"] = scanRealDivisor(imageText, index);
+					std::string secondBack = popWordStack(wordStack);
+					
+					//The V font in swg does not at all look like v's, especially when pre processed
+					if (secondBack == "s." || secondBack == "Vs.")
+					{
+						component.values["VsArmor"] = scanReal(imageText, index);
+					}
+				}
+				else if (back == "Shields")
+				{
+					std::string secondBack = popWordStack(wordStack);
+					
+					//The V font in swg does not at all look like v's, especially when pre processed
+					if (secondBack == "s." || secondBack == "Vs.")
+					{
+						component.values["VsShields"] = scanReal(imageText, index);
+					}
+				}
+				else if (back == "Energy/Shot")
+				{
+					component.values["Energy/Shot"] = scanReal(imageText, index);
 				}
 				else if (back == "Hitpoints")
 				{

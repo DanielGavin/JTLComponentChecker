@@ -26,4 +26,4 @@ struct Component {
 };
 
 
-void componentWidget(const Component& component);
+void componentWidget(Component& component);

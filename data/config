@@ -1,0 +1,4 @@
+load_system_dawg     false
+load_freq_dawg       false
+user_words_file    data/eng.user-words
+user_patterns_file data/eng.user-patterns

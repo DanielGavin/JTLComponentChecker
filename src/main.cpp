@@ -21,7 +21,10 @@ static D3DPRESENT_PARAMETERS g_d3dpp = {};
 
 static Component component;
 
-static 	char *configs[] = {"data/config/bazaar"};
+static 	char *configs[] = {"data/config"};
+
+static POINT recordPoints[2];
+static int currentRecordIndex = 0;
 
 // Forward declarations of helper functions
 bool CreateDeviceD3D(HWND hWnd);
@@ -142,19 +145,27 @@ int main(int, char **)
 
     tesseract::TessBaseAPI *api = new tesseract::TessBaseAPI();
 
-	if (api->Init("data", "eng", tesseract::OcrEngineMode::OEM_DEFAULT, nullptr, 0, nullptr, nullptr, false))
+	if (api->Init("data", "eng", tesseract::OcrEngineMode::OEM_DEFAULT, configs, 1, nullptr, nullptr, false))
 	{
 		fprintf(stderr, "Could not initialize tesseract.\n");
 		exit(1);
 	}
 
-    if(false)
+    /*
+    if(true)
     {
         Pix *pix = pixRead("test/test.bmp");
-        auto c_str = readImage(api, pix);
+        Box *box = boxCreate(recordPoints[0].x, recordPoints[0].y, recordPoints[1].x - recordPoints[0].x, recordPoints[1].y - recordPoints[0].y);
+        auto c_str = readImage(api, pix, box);
+
+        std::string str = std::string(std::move(c_str));
+        str.push_back('\0');
+        component = parseComponent(str);
+
         printf("%s", c_str);
-        return 0;
+        //return 0;
     }
+    */
 
     // Main loop
     bool done = false;
@@ -174,13 +185,29 @@ int main(int, char **)
             break;
         }
 
-        if (getKeypressAndReset())
+        if (getCoordCaptureKeypressAndReset())
+        {
+            POINT point;
+
+            if (GetCursorPos(&point))
+            {
+                recordPoints[currentRecordIndex++] = point;
+                if (currentRecordIndex == 2)
+                {
+                    currentRecordIndex = 0;
+                }
+                printf("%i %i \n", point.x, point.y);
+            }
+        }
+
+        if (getScreenCaptureKeypressAndReset())
         {
             captureScreen("");
             Pix *pix = pixRead("capture.bmp");
             if (pix != nullptr)
             {
-                auto c_str = readImage(api, pix);
+                Box *box = boxCreate(recordPoints[0].x, recordPoints[0].y, recordPoints[1].x - recordPoints[0].x, recordPoints[1].y - recordPoints[0].y);
+                auto c_str = readImage(api, pix, box);
 
                 std::string str = std::string(std::move(c_str));
 
