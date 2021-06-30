@@ -110,6 +110,13 @@ void mainWindow()
 int main(int, char **)
 {
     
+    readComponentCapData("data");
+
+    if(false)
+    {
+        return 0;
+    }
+
     // Create application window
     //ImGui_ImplWin32_EnableDpiAwareness();
     wc = {sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, _T("JTL Checker"), NULL};

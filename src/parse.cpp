@@ -83,10 +83,6 @@ void ValidateComponent(Component& component)
 	{
 		component.type = ComponentType::Shield;
 	}
-	else if (component.values.count("Armor"))
-	{
-		component.type = ComponentType::Armor;
-	}
 	else if (component.values.count("CapacitorEnergy"))
 	{
 		component.type = ComponentType::Capacitor;
@@ -95,13 +91,17 @@ void ValidateComponent(Component& component)
 	{
 		component.type = ComponentType::Booster;
 	}
-	else if (component.values.count("FiringRate"))
+	else if (component.values.count("RefireRate"))
 	{
 		component.type = ComponentType::Weapon;
 	}
 	else if (component.values.count("DroidSpeed"))
 	{
 		component.type = ComponentType::Droid;
+	}
+	else if (component.values.count("Armor"))
+	{
+		component.type = ComponentType::Armor;
 	}
 }
 
@@ -312,13 +312,13 @@ Component parseComponent(const std::string &imageText)
 					{
 						component.values["RechargeRate"] = scanReal(imageText, index);
 					}
-					else if (secondBack == "Firing")
-					{
-						component.values["FiringRate"] = scanReal(imageText, index);
-					}
 					else if (secondBack == "Generation")
 					{
 						component.values["ReactorGeneration"] = scanReal(imageText, index);
+					}
+					else if (secondBack == "Consumption")
+					{
+						component.values["ConsumptionRate"] = scanReal(imageText, index);
 					}
 				}
 				else if (back == "Speed")

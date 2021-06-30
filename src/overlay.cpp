@@ -101,6 +101,16 @@ void updateOverlay()
 		return;
 	}
 
+	if (!backgroundCleared)
+	{	
+		HDC dc = GetDC(overlayWindow);
+		RECT rc;
+		GetClientRect(overlayWindow, &rc);
+		FillRect(dc, &rc, backgroundBrush);
+		ReleaseDC(overlayWindow, dc);
+		backgroundCleared = true;
+	}
+
 	if (SwgTargetWindow)
 	{
 		RECT rect;
@@ -115,15 +125,6 @@ void updateOverlay()
 
 		ReleaseDC(overlayWindow, dc);
 		backgroundCleared = false;
-	}
-	else if (!backgroundCleared)
-	{	
-		HDC dc = GetDC(overlayWindow);
-		RECT rc;
-		GetClientRect(overlayWindow, &rc);
-		FillRect(dc, &rc, backgroundBrush);
-		ReleaseDC(overlayWindow, dc);
-		backgroundCleared = true;
 	}
 }
 
