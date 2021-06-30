@@ -9,10 +9,12 @@ static HWND overlayWindow = nullptr;
 
 static bool backgroundCleared = false;
 static HBRUSH backgroundBrush; 
+static HBRUSH captureBrush;
 
 extern WNDCLASSEX wc;
 
 static std::string componentString;
+static RECT* overlayRect;
 
 static bool overlayChanged = true;
 
@@ -61,7 +63,10 @@ bool createOverlay()
 	int width = 200;
 	int height = 200;
 
+	memset(&overlayRect, 0, sizeof(RECT));
+
 	backgroundBrush = CreateSolidBrush(RGB(0, 0, 0));
+	captureBrush = CreateSolidBrush(RGB(100, 199, 122));
 
 	WNDCLASSEX wcex = {0};
 	wcex.cbSize = sizeof(WNDCLASSEX);
@@ -115,13 +120,18 @@ void updateOverlay()
 	{
 		RECT rect;
 		GetWindowRect(SwgTargetWindow, &rect);
-		MoveWindow(overlayWindow, rect.left, rect.top, rect.right - rect.left, (rect.bottom - rect.top) / 2, true);
+		MoveWindow(overlayWindow, rect.left, rect.top, rect.right - rect.left, (int)((rect.bottom - rect.top) * 0.9), true);
 
 		HDC dc = GetDC(overlayWindow);
 		RECT rc;
 		GetClientRect(overlayWindow, &rc);
 
 		DrawText(dc, componentString.c_str(), -1, &rc, DT_TOP | DT_LEFT);
+
+		if (overlayRect != nullptr && overlayRect->left != 0 && overlayRect->top != 0) 
+		{
+			FrameRect(dc, overlayRect, captureBrush);
+		}
 
 		ReleaseDC(overlayWindow, dc);
 		backgroundCleared = false;
@@ -136,4 +146,9 @@ void changedOverlay()
 void setComponentStringOverlay(const std::string& str)
 {
 	componentString = str;
+}
+
+void setRectOverlay(RECT* r)
+{
+	overlayRect = r;
 }

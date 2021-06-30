@@ -28,6 +28,8 @@ static 	char *configs[] = {"data/config"};
 
 static POINT recordPoints[2];
 static int currentRecordIndex = 0;
+static bool resetRecord = false;
+static RECT rect;
 
 WNDCLASSEX wc;
 
@@ -188,22 +190,34 @@ int main(int, char **)
 
         if (getCoordCaptureKeypressAndReset())
         {
-
             changedOverlay();
 
             POINT point;
-            if (GetCursorPos(&point))
+
+            if (resetRecord)
+            {
+                memset(&rect, 0, sizeof(RECT));
+                resetRecord = false;
+                setRectOverlay(nullptr);
+            }
+            else if (GetCursorPos(&point))
             {
                 recordPoints[currentRecordIndex++] = point;
+
                 if (currentRecordIndex == 2)
                 {
-                    currentRecordIndex = 0;
+                    rect.left = recordPoints[0].x;
+                    rect.top = recordPoints[0].y;
+                    rect.right = recordPoints[1].x;
+                    rect.bottom =  recordPoints[1].y;   
+                    resetRecord = true;
+                    currentRecordIndex = 0;     
+                    setRectOverlay(&rect);
                 }
-                printf("%i %i \n", point.x, point.y);
             }
         }
 
-        if (getScreenCaptureKeypressAndReset())
+        if (getScreenCaptureKeypressAndReset() && resetRecord)
         {
 
             changedOverlay();
@@ -212,7 +226,8 @@ int main(int, char **)
             Pix *pix = pixRead("capture.bmp");
             if (pix != nullptr)
             {
-                Box *box = boxCreate(recordPoints[0].x, recordPoints[0].y, recordPoints[1].x - recordPoints[0].x, recordPoints[1].y - recordPoints[0].y);
+                Box *box = boxCreate(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
+                //Box *box = boxCreate(recordPoints[0].x, recordPoints[0].y, recordPoints[1].x - recordPoints[0].x, recordPoints[1].y - recordPoints[0].y);
                 auto c_str = readImage(api, pix, box);
                 printf("%s", c_str);
                 std::string str = std::string(std::move(c_str));
@@ -224,6 +239,8 @@ int main(int, char **)
                 componentString = buildComponentString(component);
 
                 setComponentStringOverlay(componentString);
+
+                boxDestroy(&box);
             }
         }
 
