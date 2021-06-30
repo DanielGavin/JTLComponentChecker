@@ -13,18 +13,13 @@ double divCap(const double &val, const double &table)
 	}
 }
 
-void drawComponentWidget(Component &component)
-{
-	static bool opened;
 
-	ImGui::Begin("Component Info", &opened);
+std::string buildComponentString(Component &component)
+{
+	std::string str;
 
 	for (auto const &[key, val] : component.values)
 	{
-		ImGui::Text("%s:", key.c_str());
-		ImGui::SameLine();
-		ImGui::Text("%f", val);
-
 		if (key == "ShipLevel" || key == "ReverseLevel")
 		{
 			continue;
@@ -33,13 +28,11 @@ void drawComponentWidget(Component &component)
 		switch (component.type)
 		{
 		case Armor:
-			ImGui::SameLine();
-			ImGui::Text("Percentage:");
-			ImGui::SameLine();
-			ImGui::TextColored(ImVec4(0, 1, 0, 1), "%f", divCap(val, armorTable[key][component.values["ShipLevel"]]));
+			double cap = divCap(val, armorTable[key][component.values["ShipLevel"]]);
+			str = str + key + ": " + std::to_string(cap) + "\n";
 			break;
 		}
 	}
 
-	ImGui::End();
+	return str;
 }

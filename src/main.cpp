@@ -9,6 +9,7 @@
 #include "capture.h"
 #include "keyboard.h"
 #include "options.h"
+#include "overlay.h"
 
 #include <d3d9.h>
 #include <tchar.h>
@@ -21,11 +22,14 @@ static LPDIRECT3DDEVICE9 g_pd3dDevice = NULL;
 static D3DPRESENT_PARAMETERS g_d3dpp = {};
 
 static Component component;
+static std::string componentString;
 
 static 	char *configs[] = {"data/config"};
 
 static POINT recordPoints[2];
 static int currentRecordIndex = 0;
+
+WNDCLASSEX wc;
 
 // Forward declarations of helper functions
 bool CreateDeviceD3D(HWND hWnd);
@@ -99,7 +103,6 @@ void dockSpace()
 void mainWindow()
 {
     dockSpace();
-    drawComponentWidget(component);
     drawOptionsWidget();
 }
 
@@ -109,7 +112,7 @@ int main(int, char **)
     
     // Create application window
     //ImGui_ImplWin32_EnableDpiAwareness();
-    WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, _T("JTL Checker"), NULL};
+    wc = {sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, _T("JTL Checker"), NULL};
     
     RegisterClassEx(&wc);
 
@@ -133,6 +136,11 @@ int main(int, char **)
     ImGuiIO &io = ImGui::GetIO();
 
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+    if (!createOverlay())
+    {
+        return 1;
+    }
 
     ImGui::StyleColorsDark();
 
@@ -173,8 +181,10 @@ int main(int, char **)
 
         if (getCoordCaptureKeypressAndReset())
         {
-            POINT point;
 
+            changedOverlay();
+
+            POINT point;
             if (GetCursorPos(&point))
             {
                 recordPoints[currentRecordIndex++] = point;
@@ -188,6 +198,9 @@ int main(int, char **)
 
         if (getScreenCaptureKeypressAndReset())
         {
+
+            changedOverlay();
+
             captureScreen("");
             Pix *pix = pixRead("capture.bmp");
             if (pix != nullptr)
@@ -200,8 +213,14 @@ int main(int, char **)
                 str.push_back('\0');
 
                 component = parseComponent(str);
+
+                componentString = buildComponentString(component);
+
+                setComponentStringOverlay(componentString);
             }
         }
+
+        updateOverlay();
 
         // Start the Dear ImGui frame
         ImGui_ImplDX9_NewFrame();

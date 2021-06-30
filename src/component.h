@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <vector>
 #include <string>
 
 static std::map<std::string, std::map<int, double>> armorTable = {
@@ -26,4 +27,5 @@ struct Component
 	std::map<std::string, double> values;
 };
 
-void drawComponentWidget(Component &component);
+std::string buildComponentString(Component &component);
+
