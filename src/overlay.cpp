@@ -14,8 +14,7 @@ static HBRUSH captureBrush;
 extern WNDCLASSEX wc;
 
 static std::string componentString;
-static RECT* overlayRect;
-
+static RECT* overlayRect = nullptr;
 static bool overlayChanged = true;
 
 // Win32 message handler
@@ -62,8 +61,6 @@ bool createOverlay()
 {
 	int width = 200;
 	int height = 200;
-
-	memset(&overlayRect, 0, sizeof(RECT));
 
 	backgroundBrush = CreateSolidBrush(RGB(0, 0, 0));
 	captureBrush = CreateSolidBrush(RGB(100, 199, 122));
@@ -126,6 +123,11 @@ void updateOverlay()
 		RECT rc;
 		GetClientRect(overlayWindow, &rc);
 
+		//margin
+		rc.top += (rc.bottom - rc.top) / 10;
+
+		SetTextColor(dc, RGB(173,255,47));
+		SetBkColor(dc, RGB(0,0,0));
 		DrawText(dc, componentString.c_str(), -1, &rc, DT_TOP | DT_LEFT);
 
 		if (overlayRect != nullptr && overlayRect->left != 0 && overlayRect->top != 0) 

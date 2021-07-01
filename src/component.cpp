@@ -1,4 +1,6 @@
 #include "component.h"
+#include "options.h"
+
 #include <imgui/imgui.h>
 
 #pragma warning(push)
@@ -10,10 +12,10 @@
 
 #include <iostream>
 
-static std::map<std::string, std::map<int, double>> armorTable;
-static std::map<std::string, std::map<int, double>> boosterTable;
-static std::map<std::string, std::map<int, double>> weaponTable;
-static std::map<std::string, std::map<int, double>> capacitorTable;
+extern Options options;
+
+
+static std::map<int, std::map<std::string, std::map<int, double>>> capTable;
 
 double divCap(const double &val, const double &table)
 {
@@ -45,9 +47,9 @@ void readComponentCapData(std::string dataPath)
 
 	while (armorIn.read_row(shipLevel, armor, hp, mass))
 	{
-		armorTable["Armor"][shipLevel] = armor;
-		armorTable["Hp"][shipLevel] = hp;
-		armorTable["Mass"][shipLevel] = mass;
+		capTable[Armor]["Armor"][shipLevel] = armor;
+		capTable[Armor]["Hp"][shipLevel] = hp;
+		capTable[Armor]["Mass"][shipLevel] = mass;
 	}
 
 	//BOOSTER
@@ -60,36 +62,36 @@ void readComponentCapData(std::string dataPath)
 
 	while (boosterIn.read_row(shipLevel, armor, hp, reactorDrain, mass, boosterEnergy, rechargeRate, consumptionRate, acceleration, speed))
 	{
-		boosterTable["Armor"][shipLevel] = armor;
-		boosterTable["Hp"][shipLevel] = hp;
-		boosterTable["Mass"][shipLevel] = mass;
-		boosterTable["ReactorDrain"][shipLevel] = reactorDrain;
-		boosterTable["BoosterEnergy"][shipLevel] = boosterEnergy;
-		boosterTable["RechargeRate"][shipLevel] = rechargeRate;
-		boosterTable["ConsumptionRate"][shipLevel] = consumptionRate;
-		boosterTable["Acceleration"][shipLevel] = acceleration;
-		boosterTable["Speed"][shipLevel] = speed;
+		capTable[Booster]["Armor"][shipLevel] = armor;
+		capTable[Booster]["Hp"][shipLevel] = hp;
+		capTable[Booster]["Mass"][shipLevel] = mass;
+		capTable[Booster]["ReactorDrain"][shipLevel] = reactorDrain;
+		capTable[Booster]["BoosterEnergy"][shipLevel] = boosterEnergy;
+		capTable[Booster]["RechargeRate"][shipLevel] = rechargeRate;
+		capTable[Booster]["ConsumptionRate"][shipLevel] = consumptionRate;
+		capTable[Booster]["Acceleration"][shipLevel] = acceleration;
+		capTable[Booster]["Speed"][shipLevel] = speed;
 	}
 
 	//WEAPON
 	std::string weaponPath = dataPath + "/" + "weapon.csv";
 	io::CSVReader<11> weaponIn(weaponPath);
-	weaponIn.read_header(io::ignore_extra_column, "ShipLevel","Armor","Hp","ReactorDrain","Mass","MinDamage","MaxDamage","VsShields","VsArmor","EnergyShot","RechargeRate");
+	weaponIn.read_header(io::ignore_extra_column, "ShipLevel","Armor","Hp","ReactorDrain","Mass","MinDamage","MaxDamage","VsShields","VsArmor","EnergyShot","RefireRate");
 
-	double minDamage, maxDamage, vsShields, vsArmor, energyShot;
+	double minDamage, maxDamage, vsShields, vsArmor, energyShot, refireRate;
 
-	while (weaponIn.read_row(shipLevel, armor, hp, reactorDrain, mass, minDamage, maxDamage, vsShields, vsArmor, energyShot, rechargeRate))
+	while (weaponIn.read_row(shipLevel, armor, hp, reactorDrain, mass, minDamage, maxDamage, vsShields, vsArmor, energyShot, refireRate))
 	{
-		weaponTable["Armor"][shipLevel] = armor;
-		weaponTable["Hp"][shipLevel] = hp;
-		weaponTable["Mass"][shipLevel] = mass;
-		weaponTable["ReactorDrain"][shipLevel] = reactorDrain;
-		weaponTable["MaxDamage"][shipLevel] = maxDamage;
-		weaponTable["MinDamage"][shipLevel] = minDamage;
-		weaponTable["VsShields"][shipLevel] = vsShields;
-		weaponTable["VsArmor"][shipLevel] = vsArmor;
-		weaponTable["Energy/Shot"][shipLevel] = energyShot;
-		weaponTable["RefireRate"][shipLevel] = rechargeRate;
+		capTable[Weapon]["Armor"][shipLevel] = armor;
+		capTable[Weapon]["Hp"][shipLevel] = hp;
+		capTable[Weapon]["Mass"][shipLevel] = mass;
+		capTable[Weapon]["ReactorDrain"][shipLevel] = reactorDrain;
+		capTable[Weapon]["MaxDamage"][shipLevel] = maxDamage;
+		capTable[Weapon]["MinDamage"][shipLevel] = minDamage;
+		capTable[Weapon]["VsShields"][shipLevel] = vsShields;
+		capTable[Weapon]["VsArmor"][shipLevel] = vsArmor;
+		capTable[Weapon]["Energy/Shot"][shipLevel] = energyShot;
+		capTable[Weapon]["RefireRate"][shipLevel] = refireRate;
 	}
 
 }
@@ -105,20 +107,18 @@ std::string buildComponentString(Component &component)
 			continue;
 		}
 
-		switch (component.type)
+		if (capTable.find(component.type) != capTable.end())
 		{
-		case Armor:
-		{
-			double cap = divCap(val, armorTable[key][component.values["ShipLevel"]]);
-			str = str + key + ": " + std::to_string(cap) + "\n";
-			break;
-		}
-		case Weapon:
-		{
-			double cap = divCap(val, weaponTable[key][component.values["ShipLevel"]]);
-			str = str + key + ": " + std::to_string(cap) + "\n";
-			break;
-		}
+			double cap = divCap(val, capTable[component.type][key][component.values["ShipLevel"]]);
+
+			if (options.debug)
+			{
+				str = str + key + ": " + std::to_string(val) + "\n";
+			}
+			else if (options.filterStat <= cap)
+			{
+				str = str + key + ": " + std::to_string(cap) + "\n";
+			}
 		}
 	}
 

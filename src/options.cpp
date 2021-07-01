@@ -1,10 +1,12 @@
 #include "options.h"
 #include <imgui/imgui.h>
 
-void drawOptionsWidget()
+void drawOptionsWidget(Options& options)
 {
-	double test;
 	ImGui::Begin("Options");
-	ImGui::InputDouble("Emit sound on percentile", &test);
+	ImGui::InputDouble("Stat filter", &options.filterStat);
+	ImGui::ColorEdit3("Stat text color", options.statTextColor);
+	ImGui::InputDouble("Stat text top margin", &options.statTextTopMargin);
+	ImGui::Checkbox("Debug", &options.debug);
 	ImGui::End();
 }

@@ -30,7 +30,7 @@ char* readImage(tesseract::TessBaseAPI* api, Pix *input, Box* box)
 
 	Pix* crop = pixClipRectangle(input, box, nullptr);
 
-	Pix *normalized = normalizationAndThreshold(crop, 150);
+	Pix *normalized = normalizationAndThreshold(crop, 170);
 
 	Pix *invert = invertImage(normalized);
 
@@ -42,7 +42,7 @@ char* readImage(tesseract::TessBaseAPI* api, Pix *input, Box* box)
 	pixWrite("crop.png", finalImage, IFF_PNG);
 
 	api->SetImage(finalImage);
-	api->SetSourceResolution(100);
+	api->SetSourceResolution(70);
 
 	outText = api->GetUTF8Text();
 
