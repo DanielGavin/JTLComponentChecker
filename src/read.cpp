@@ -21,7 +21,7 @@ Pix *invertImage(Pix *image)
 Pix *blurImage(Pix *image)
 {
 	Pix *pixG = pixConvertTo8(image, 0);
-	return pixAddGaussianNoise(pixG, 1);
+	return pixAddGaussianNoise(pixG, 3);
 }
 
 char* readImage(tesseract::TessBaseAPI* api, Pix *input, Box* box)
@@ -37,19 +37,22 @@ char* readImage(tesseract::TessBaseAPI* api, Pix *input, Box* box)
     Pix *blur = blurImage(invert);
 	Pix *scaled = pixScaleToSize(blur, blur->w * 4, blur->h * 4);
 	Pix *dilate = pixDilateGray(scaled, 3, 3);
-	Pix *finalImage = dilate;
+	Pix *median = pixMedianFilter(dilate, 3, 3);
+	Pix *finalImage = median;
 
-	pixWrite("crop.png", finalImage, IFF_PNG);
+	//pixWrite("crop.png", finalImage, IFF_PNG);
 
 	api->SetImage(finalImage);
 	api->SetSourceResolution(70);
 
 	outText = api->GetUTF8Text();
 
+	pixDestroy(&crop);
 	pixDestroy(&normalized);
 	pixDestroy(&invert);
 	pixDestroy(&blur);
 	pixDestroy(&finalImage);
+	pixDestroy(&dilate);
 	pixDestroy(&scaled);
 	pixDestroy(&input);
 

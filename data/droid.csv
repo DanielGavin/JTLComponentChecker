@@ -1,4 +1,4 @@
-Level,Armor,Hitpoint,R.E.D,Mass,Droid Command Speed
+ShipLevel,Armor,Hp,ReactorDrain,Mass,DroidCommandSpeed
 1,79.6,79.6,467.0,474.9,32.3
 2,120.2,120.2,469.5,826.8,31.7
 3,181.0,181.0,471.5,1171.2,27.9

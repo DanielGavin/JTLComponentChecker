@@ -1,11 +1,14 @@
 #include "keyboard.h"
 #include <iostream>
 #include "capture.h"
+#include "options.h"
 
 static bool capturekeyPressed = false;
 static bool captureCoordinate = false;
 
 static HHOOK hook;
+
+extern Options options;
 
 LRESULT CALLBACK keyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
@@ -17,11 +20,11 @@ LRESULT CALLBACK keyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 		{
 			unsigned char key = MapVirtualKeyA(kb->vkCode, MAPVK_VK_TO_CHAR);
 
-			if (key == '.')
+			if (key == options.executeKey[0] && (!options.executeKeyShiftModifier || GetKeyState(VK_SHIFT) & 0x8000))
 			{
 				capturekeyPressed = true;
 			}
-			else if (key == ',')
+			else if (key == options.recordKey[0] && (!options.recordKeyShiftModifier || GetKeyState(VK_SHIFT) & 0x8000))
 			{
 				captureCoordinate = true;
 			}

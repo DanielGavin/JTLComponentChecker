@@ -10,6 +10,7 @@
 #include "keyboard.h"
 #include "options.h"
 #include "overlay.h"
+#include "help.h"
 
 #include <d3d9.h>
 #include <tchar.h>
@@ -86,6 +87,7 @@ void dockSpace()
 void mainWindow()
 {
     dockSpace();
+    drawHelpWidget();
     drawOptionsWidget(options);
 }
 
@@ -99,11 +101,10 @@ int main(int, char **)
     #endif
 
     options.filterStat = 95.0;
-
-    if(false)
-    {
-        return 0;
-    }
+    options.executeKey[0] = '.';
+    options.executeKeyShiftModifier = true;
+    options.recordKey[0] = ',';
+    options.recordKeyShiftModifier = true;
 
     // Create application window
     //ImGui_ImplWin32_EnableDpiAwareness();
@@ -194,10 +195,21 @@ int main(int, char **)
 
                 if (currentRecordIndex == 2)
                 {
-                    rect.left = recordPoints[0].x;
-                    rect.top = recordPoints[0].y;
-                    rect.right = recordPoints[1].x;
-                    rect.bottom =  recordPoints[1].y;   
+                    if (recordPoints[0].x < recordPoints[1].x && recordPoints[0].y < recordPoints[1].y)
+                    {
+                        rect.left = recordPoints[0].x;
+                        rect.top = recordPoints[0].y;
+                        rect.right = recordPoints[1].x;
+                        rect.bottom =  recordPoints[1].y;   
+                    }
+                    else 
+                    {
+                        rect.left = recordPoints[1].x;
+                        rect.top = recordPoints[1].y;
+                        rect.right = recordPoints[0].x;
+                        rect.bottom =  recordPoints[0].y;   
+                    }
+
                     resetRecord = true;
                     currentRecordIndex = 0;     
                     setRectOverlay(&rect);
@@ -215,7 +227,7 @@ int main(int, char **)
             if (pix != nullptr)
             {
                 Box *box = boxCreate(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
-                //Box *box = boxCreate(recordPoints[0].x, recordPoints[0].y, recordPoints[1].x - recordPoints[0].x, recordPoints[1].y - recordPoints[0].y);
+
                 auto c_str = readImage(api, pix, box);
                 printf("%s", c_str);
                 std::string str = std::string(std::move(c_str));
@@ -351,7 +363,8 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
         break;
     case WM_DESTROY:
-        ::PostQuitMessage(0);
+        uninstallKeyboardHook();
+        PostQuitMessage(0);
         return 0;
     }
     return ::DefWindowProc(hWnd, msg, wParam, lParam);

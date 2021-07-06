@@ -19,6 +19,7 @@ add_executable(JTLComponentChecker src/main.cpp
  src/keyboard.cpp
  src/options.cpp
  src/overlay.cpp
+ src/help.cpp
  src/imgui/imgui.cpp
  src/imgui/imgui_draw.cpp 
  src/imgui/imgui_impl_win32.cpp 

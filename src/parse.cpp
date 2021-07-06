@@ -71,7 +71,7 @@ void ValidateComponent(Component& component)
 {
 	//TODO(add range checks to see that all the input actually makes sense in relation to caps)
 
-	if (component.values.count("Reactor Generation"))
+	if (component.values.count("ReactorGeneration"))
 	{
 		component.type = ComponentType::Reactor;
 	}
@@ -206,18 +206,28 @@ Component parseComponent(const std::string &imageText)
 					}
 
 				}
+				else if (back == "Maximum")
+				{
+					std::string secondBack = popWordStack(wordStack);
 
-				else if (back == "Pitch")
-				{
-					component.values["Pitch"] = scanReal(imageText, index);
-				}
-				else if (back == "Yaw")
-				{
-					component.values["Yaw"] = scanReal(imageText, index);
-				}
-				else if (back == "Roll")
-				{
-					component.values["Roll"] = scanReal(imageText, index);
+					if (secondBack == "Rate")
+					{
+						std::string thirdBack = popWordStack(wordStack);
+
+						if (thirdBack == "Pitch")
+						{
+							component.values["Pitch"] = scanReal(imageText, index);
+						}
+						else if (thirdBack == "Yaw")
+						{
+							component.values["Yaw"] = scanReal(imageText, index);
+						}
+						else if (thirdBack == "Roll")
+						{
+							component.values["Roll"] = scanReal(imageText, index);
+						}
+
+					}
 				}
 				else if (back == "Speed")
 				{
@@ -266,7 +276,7 @@ Component parseComponent(const std::string &imageText)
 				{
 					component.values["VsShields"] = scanReal(imageText, index);				
 				}
-				else if (back == "Energy/Shot")
+				else if (back == "Energy/Shot" || back == "Energy./Shot" || back == "Energy,/Shot")
 				{
 					component.values["Energy/Shot"] = scanReal(imageText, index);
 				}
@@ -314,10 +324,6 @@ Component parseComponent(const std::string &imageText)
 					{
 						component.values["ConsumptionRate"] = scanReal(imageText, index);
 					}
-				}
-				else if (back == "Speed")
-				{
-					component.values["Speed"] = scanReal(imageText, index);
 				}
 				else if (back == "Acceleration")
 				{

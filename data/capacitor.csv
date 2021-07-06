@@ -1,4 +1,4 @@
-Level,Armor,Hitpoint,R.E.D.,Mass,Energy,Recharge Rate
+ShipLevel,Armor,Hp,ReactorDrain,Mass,Energy,RechargeRate
 1,84.0,84.0,714.5,730.8,729.2,25.9
 2,121.3,121.3,553.9,1064.2,1185.1,41.3
 3,196.2,196.2,757.8,2082.6,736.5,28.0
