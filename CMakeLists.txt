@@ -11,7 +11,7 @@ endif(MSVC)
 find_package(Tesseract CONFIG REQUIRED)
 
 # add the executable
-add_executable(JTLComponentChecker src/main.cpp 
+add_executable(JTLComponentChecker WIN32 src/main.cpp 
  src/read.cpp 
  src/parse.cpp
  src/component.cpp

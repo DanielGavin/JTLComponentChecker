@@ -91,8 +91,7 @@ void mainWindow()
     drawOptionsWidget(options);
 }
 
-// Main code
-int main(int, char **)
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {    
     readComponentCapData("data");
 
