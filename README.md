@@ -1,8 +1,10 @@
 # JTLComponentChecker
 
-SWG JTL utility made to grade your space components.
+SWG JTL utility made to grade your space components. It is only tested with the SWG restoration 3 client.
 
 Relies on https://github.com/tesseract-ocr/tesseract for OCR.
+
+Space loot data from: http://swgspacefr.free.fr/
 
 NOTE: It has to be run in admin mode if swg is running in admin mode. 
 
